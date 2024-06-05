@@ -1,5 +1,8 @@
-module github.com/oluu-web/what-is-playing
+module what-is-playing
 
-go 1.20
+go 1.21.5
 
-require github.com/joho/godotenv v1.5.1
+require (
+	github.com/joho/godotenv v1.5.1
+	github.com/michimani/gotwi v0.14.0
+)
