@@ -215,6 +215,9 @@ func GetCurrentlyPlaying(token string) (string, error) {
 	defer resp.Body.Close()
 
 	// Check the response status
+	if resp.StatusCode != http.StatusNoContent {
+		os.Exit(0)
+	}
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("error getting current track: received status code %d", resp.StatusCode)
 	}
