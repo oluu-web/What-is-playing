@@ -35,45 +35,52 @@ func init() {
 }
 
 func main() {
-	accessToken := os.Getenv("TW_ACCESS_TOKEN")
-	accessSecret := os.Getenv("TW_ACCESS_SECRET")
-	if accessToken == "" || accessSecret == "" {
-		fmt.Fprintln(os.Stderr, "Please set the TW_ACCESS_TOKEN and TW_ACCESS_SECRET environment variables.")
-		os.Exit(1)
-	}
+	var prevURL string
 
-	var token, err = GetTokenFromAirtable()
-	if err != nil {
-		fmt.Println("Unable to get token from airtable: ", err)
-	}
-	GlobalToken = token
-	if GlobalToken.Token == "" {
-		UpdateToken()
-	}
-	if !TokenValid(GlobalToken) {
-		UpdateToken()
-	}
+	for {
+		accessToken := os.Getenv("TW_ACCESS_TOKEN")
+		accessSecret := os.Getenv("TW_ACCESS_SECRET")
+		if accessToken == "" || accessSecret == "" {
+			fmt.Fprintln(os.Stderr, "Please set the TW_ACCESS_TOKEN and TW_ACCESS_SECRET environment variables.")
+			os.Exit(1)
+		}
 
-	url, err := GetCurrentlyPlaying(GlobalToken.Token)
-	if err != nil {
-		fmt.Println("Error getting currently playing track from spotify: ", err)
-	}
+		var token, err = GetTokenFromAirtable()
+		if err != nil {
+			fmt.Println("Unable to get token from airtable: ", err)
+		}
+		GlobalToken = token
+		if GlobalToken.Token == "" {
+			UpdateToken()
+		}
+		if !TokenValid(GlobalToken) {
+			UpdateToken()
+		}
 
-	client, err := newOAuth1Client(accessToken, accessSecret)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+		url, err := GetCurrentlyPlaying(GlobalToken.Token)
+		if err != nil {
+			fmt.Println("Error getting currently playing track from spotify: ", err)
+		}
 
-	err = tweet(client, url)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
+		//check if current url and previous url are the same
+		if url != prevURL {
+			client, err := newOAuth1Client(accessToken, accessSecret)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
 
-	fmt.Println("This is the currently playing track:", url)
+			err = tweet(client, url)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(2)
+			}
+			prevURL = url
+		}
+
+		time.Sleep(120 * time.Second)
+	}
 }
-
 func GetNewToken() (*http.Response, error) {
 	params := url.Values{}
 	params.Add("grant_type", "refresh_token")
@@ -234,8 +241,6 @@ func GetCurrentlyPlaying(token string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("spotify URL not found in external_urls")
 	}
-
-	fmt.Println(spotifyURL)
 	return spotifyURL, nil
 }
 
