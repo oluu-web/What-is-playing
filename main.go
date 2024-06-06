@@ -37,50 +37,49 @@ func init() {
 func main() {
 	var prevURL string
 
-	for {
-		accessToken := os.Getenv("TW_ACCESS_TOKEN")
-		accessSecret := os.Getenv("TW_ACCESS_SECRET")
-		if accessToken == "" || accessSecret == "" {
-			fmt.Fprintln(os.Stderr, "Please set the TW_ACCESS_TOKEN and TW_ACCESS_SECRET environment variables.")
+	accessToken := os.Getenv("TW_ACCESS_TOKEN")
+	accessSecret := os.Getenv("TW_ACCESS_SECRET")
+	if accessToken == "" || accessSecret == "" {
+		fmt.Fprintln(os.Stderr, "Please set the TW_ACCESS_TOKEN and TW_ACCESS_SECRET environment variables.")
+		os.Exit(1)
+	}
+
+	var token, err = GetTokenFromAirtable()
+	if err != nil {
+		fmt.Println("Unable to get token from airtable: ", err)
+	}
+	GlobalToken = token
+	if GlobalToken.Token == "" {
+		UpdateToken()
+	}
+	if !TokenValid(GlobalToken) {
+		UpdateToken()
+	}
+
+	url, err := GetCurrentlyPlaying(GlobalToken.Token)
+	if err != nil {
+		fmt.Println("Error getting currently playing track from spotify: ", err)
+	}
+
+	//check if current url and previous url are the same
+	if url != prevURL {
+		client, err := newOAuth1Client(accessToken, accessSecret)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
-		var token, err = GetTokenFromAirtable()
+		err = tweet(client, url)
 		if err != nil {
-			fmt.Println("Unable to get token from airtable: ", err)
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
 		}
-		GlobalToken = token
-		if GlobalToken.Token == "" {
-			UpdateToken()
-		}
-		if !TokenValid(GlobalToken) {
-			UpdateToken()
-		}
-
-		url, err := GetCurrentlyPlaying(GlobalToken.Token)
-		if err != nil {
-			fmt.Println("Error getting currently playing track from spotify: ", err)
-		}
-
-		//check if current url and previous url are the same
-		if url != prevURL {
-			client, err := newOAuth1Client(accessToken, accessSecret)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
-
-			err = tweet(client, url)
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(2)
-			}
-			prevURL = url
-		}
-
-		time.Sleep(120 * time.Second)
+		prevURL = url
 	}
+
+	time.Sleep(120 * time.Second)
 }
+
 func GetNewToken() (*http.Response, error) {
 	params := url.Values{}
 	params.Add("grant_type", "refresh_token")
