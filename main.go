@@ -61,21 +61,21 @@ func main() {
 		fmt.Println("Error getting currently playing track from spotify: ", err)
 	}
 
-	//check if current url and previous url are the same
-	if url != prevURL {
-		client, err := newOAuth1Client(accessToken, accessSecret)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-
-		err = tweet(client, url)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(2)
-		}
-		prevURL = url
+	if url == prevURL {
+		return
 	}
+
+	client, err := newOAuth1Client(accessToken, accessSecret)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	err = tweet(client, url)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	prevURL = url
 }
 
 func GetNewToken() (*http.Response, error) {
