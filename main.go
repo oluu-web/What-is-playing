@@ -26,6 +26,7 @@ type Token struct {
 }
 
 var GlobalToken Token
+var prevURL string
 
 func init() {
 	err := godotenv.Load()
@@ -35,7 +36,6 @@ func init() {
 }
 
 func main() {
-	var prevURL string
 
 	accessToken := os.Getenv("TW_ACCESS_TOKEN")
 	accessSecret := os.Getenv("TW_ACCESS_SECRET")
@@ -76,8 +76,6 @@ func main() {
 		}
 		prevURL = url
 	}
-
-	time.Sleep(120 * time.Second)
 }
 
 func GetNewToken() (*http.Response, error) {
