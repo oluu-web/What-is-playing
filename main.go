@@ -62,7 +62,7 @@ func main() {
 	}
 
 	if url == prevURL {
-		return
+		os.Exit(0)
 	}
 
 	client, err := newOAuth1Client(accessToken, accessSecret)
