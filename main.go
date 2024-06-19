@@ -49,13 +49,10 @@ func main() {
 		fmt.Println("Unable to get token from airtable: ", err)
 	}
 	GlobalToken = token
-	if GlobalToken.Token == "" {
+	if GlobalToken.Token == "" || !TokenValid(GlobalToken){
 		UpdateToken()
 	}
-	if !TokenValid(GlobalToken) {
-		UpdateToken()
-	}
-
+	
 	url, err := GetCurrentlyPlaying(GlobalToken.Token)
 	if err != nil {
 		fmt.Println("Error getting currently playing track from spotify: ", err)
